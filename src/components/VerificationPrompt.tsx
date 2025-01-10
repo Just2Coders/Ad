@@ -21,6 +21,11 @@ const VerificationPrompt = ({
 }: VerificationPromptProps) => {
   const [code, setCode] = React.useState("");
 
+  React.useEffect(() => {
+    // Reset code when dialog opens
+    setCode("");
+  }, [isOpen]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onVerify(code);
