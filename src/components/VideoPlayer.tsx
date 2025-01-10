@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { Play, Pause, Volume2, VolumeX, X } from "lucide-react";
+import { Play, Pause, Volume2, VolumeX, X, Copy, Check } from "lucide-react";
 import { Button } from "./ui/button";
 import { Progress } from "./ui/progress";
 import { Card } from "./ui/card";
+import { useToast } from "./ui/use-toast";
 
 interface VideoPlayerProps {
   videoUrl?: string;
@@ -35,7 +36,9 @@ const VideoPlayer = ({
   const [canClose, setCanClose] = useState(false);
   const [verificationCode, setVerificationCode] = useState("");
   const [codeShown, setCodeShown] = useState(false);
+  const [hasCopied, setHasCopied] = useState(false);
 
+  const { toast } = useToast();
   const videoRef = React.useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -94,6 +97,22 @@ const VideoPlayer = ({
     }
   };
 
+  const copyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(verificationCode);
+      setHasCopied(true);
+      toast({
+        description: "Code copied to clipboard!",
+      });
+      setTimeout(() => setHasCopied(false), 2000);
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        description: "Failed to copy code.",
+      });
+    }
+  };
+
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
@@ -114,8 +133,22 @@ const VideoPlayer = ({
 
         {/* Verification Code Overlay */}
         {codeShown && currentTime < 5 && (
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black/90 text-white px-6 py-4 rounded-lg text-2xl font-bold">
-            {verificationCode}
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black/90 text-white px-6 py-4 rounded-lg">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl font-bold">{verificationCode}</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-white hover:text-white/80"
+                onClick={copyCode}
+              >
+                {hasCopied ? (
+                  <Check className="h-4 w-4" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
           </div>
         )}
 
