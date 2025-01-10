@@ -4,7 +4,8 @@ import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
 import { useAuth } from "@/lib/auth";
-import { useToast } from "../ui/use-toast";
+import { Loader2 } from "lucide-react";
+import { Alert, AlertDescription } from "../ui/alert";
 
 type AuthMode = "login" | "register";
 
@@ -12,30 +13,22 @@ export default function AuthForm() {
   const [mode, setMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [showVerificationAlert, setShowVerificationAlert] = useState(false);
 
-  const { login, register } = useAuth();
-  const { toast } = useToast();
+  const { login, register, isLoading } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
 
     try {
       if (mode === "login") {
         await login(email, password);
       } else {
         await register(email, password);
+        setShowVerificationAlert(true);
       }
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description:
-          error instanceof Error ? error.message : "Something went wrong",
-      });
-    } finally {
-      setLoading(false);
+      console.error(error);
     }
   };
 
@@ -44,8 +37,17 @@ export default function AuthForm() {
       <Card className="w-[400px] p-6 bg-white">
         <form onSubmit={handleSubmit} className="space-y-4">
           <h2 className="text-2xl font-bold text-center mb-6">
-            {mode === "login" ? "Login" : "Create Account"}
+            {mode === "login" ? "Welcome Back" : "Create Account"}
           </h2>
+
+          {showVerificationAlert && mode === "register" && (
+            <Alert>
+              <AlertDescription>
+                Please check your email for a verification link to complete your
+                registration.
+              </AlertDescription>
+            </Alert>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
@@ -54,8 +56,10 @@ export default function AuthForm() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
               required
-              disabled={loading}
+              disabled={isLoading}
+              className="w-full"
             />
           </div>
 
@@ -66,13 +70,22 @@ export default function AuthForm() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your password"
               required
-              disabled={loading}
+              disabled={isLoading}
+              className="w-full"
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Loading..." : mode === "login" ? "Login" : "Register"}
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {mode === "login" ? "Logging in..." : "Creating account..."}
+              </>
+            ) : (
+              <>{mode === "login" ? "Login" : "Create Account"}</>
+            )}
           </Button>
 
           <p className="text-center text-sm text-muted-foreground">
@@ -81,11 +94,14 @@ export default function AuthForm() {
               : "Already have an account?"}{" "}
             <button
               type="button"
-              className="text-primary hover:underline"
-              onClick={() => setMode(mode === "login" ? "register" : "login")}
-              disabled={loading}
+              className="text-primary hover:underline font-medium"
+              onClick={() => {
+                setMode(mode === "login" ? "register" : "login");
+                setShowVerificationAlert(false);
+              }}
+              disabled={isLoading}
             >
-              {mode === "login" ? "Register" : "Login"}
+              {mode === "login" ? "Sign up" : "Sign in"}
             </button>
           </p>
         </form>
