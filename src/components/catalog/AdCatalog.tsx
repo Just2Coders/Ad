@@ -48,6 +48,30 @@ export default function AdCatalog({
       views: 250,
     },
     {
+      id: "5",
+      title: "Luxury Car Review",
+      category: "Automotive",
+      videoUrl: "https://download.samplelib.com/mp4/sample-30s.mp4",
+      thumbnail: "https://images.unsplash.com/photo-1503376780353-7e6692767b70",
+      views: 420,
+    },
+    {
+      id: "6",
+      title: "Smart Home Gadgets",
+      category: "Electronics",
+      videoUrl: "https://download.samplelib.com/mp4/sample-15s.mp4",
+      thumbnail: "https://images.unsplash.com/photo-1558002038-1055907df827",
+      views: 280,
+    },
+    {
+      id: "7",
+      title: "Makeup Tutorial",
+      category: "Beauty",
+      videoUrl: "https://download.samplelib.com/mp4/sample-20s.mp4",
+      thumbnail: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9",
+      views: 310,
+    },
+    {
       id: "4",
       title: "Summer Fashion Collection",
       category: "Fashion",
@@ -76,6 +100,9 @@ export default function AdCatalog({
   const handleAdClick = (ad: Ad) => {
     setSelectedAd(ad);
     setShowVideo(true);
+    setVerificationCode("");
+    setVerificationError(false);
+    setVerificationSuccess(false);
   };
 
   const handleVideoClose = () => {
@@ -94,6 +121,7 @@ export default function AdCatalog({
       setTimeout(() => {
         setShowVerification(false);
         setSelectedAd(null);
+        setVerificationCode("");
         onWatchComplete();
       }, 1500);
     } else {
@@ -154,6 +182,7 @@ export default function AdCatalog({
         onClose={() => {
           setShowVerification(false);
           setSelectedAd(null);
+          setVerificationCode("");
         }}
         isError={verificationError}
         isSuccess={verificationSuccess}
