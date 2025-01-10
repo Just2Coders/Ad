@@ -38,6 +38,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Redirect to /home if user is logged in
+  useEffect(() => {
+    if (user && window.location.pathname === "/auth") {
+      navigate("/home");
+    }
+  }, [user, navigate]);
+
   const login = async (email: string, password: string) => {
     try {
       setIsLoading(true);

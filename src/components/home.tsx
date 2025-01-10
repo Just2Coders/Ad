@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import VerificationPrompt from "./VerificationPrompt";
@@ -8,11 +8,7 @@ import { Button } from "./ui/button";
 import { LogOut, Plus, Search } from "lucide-react";
 import { Dialog, DialogContent } from "./ui/dialog";
 import { Input } from "./ui/input";
-
-interface HomeProps {
-  initialQuota?: number;
-  initialWatched?: number;
-}
+import { getViewedAds } from "@/lib/api";
 
 const categories = [
   "All",
@@ -25,27 +21,43 @@ const categories = [
   "Automotive",
 ];
 
-const Home = ({ initialQuota = 5, initialWatched = 0 }: HomeProps) => {
+const REQUIRED_VIEWS = 5;
+
+export default function Home() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [viewedCount, setViewedCount] = useState(0);
+  const [showAdForm, setShowAdForm] = useState(false);
+  const [search, setSearch] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
 
   // Redirect if not authenticated
-  React.useEffect(() => {
+  useEffect(() => {
     if (!user) {
       navigate("/auth");
     }
   }, [user, navigate]);
 
-  const [watched, setWatched] = useState(initialWatched);
-  const [showAdForm, setShowAdForm] = useState(false);
-  const [search, setSearch] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All");
+  useEffect(() => {
+    if (user) {
+      loadViewedCount();
+    }
+  }, [user]);
 
-  const handleWatchComplete = () => {
-    setWatched((prev) => prev + 1);
+  const loadViewedCount = async () => {
+    try {
+      const viewedAds = await getViewedAds(user!.id);
+      setViewedCount(viewedAds.length);
+    } catch (error) {
+      console.error("Error loading viewed ads count:", error);
+    }
   };
 
-  const isQuotaMet = watched >= initialQuota;
+  const handleWatchComplete = async () => {
+    await loadViewedCount();
+  };
+
+  const isQuotaMet = viewedCount >= REQUIRED_VIEWS;
 
   if (!user) return null;
 
@@ -62,11 +74,11 @@ const Home = ({ initialQuota = 5, initialWatched = 0 }: HomeProps) => {
               <div className="h-2 w-32 bg-gray-200 rounded-full overflow-hidden">
                 <div
                   className={`h-full transition-all duration-500 ${isQuotaMet ? "animate-pulse bg-green-500" : "bg-blue-500"}`}
-                  style={{ width: `${(watched / initialQuota) * 100}%` }}
+                  style={{ width: `${(viewedCount / REQUIRED_VIEWS) * 100}%` }}
                 />
               </div>
               <span className="text-sm font-medium">
-                {watched}/{initialQuota}
+                {viewedCount}/{REQUIRED_VIEWS}
               </span>
 
               {isQuotaMet && (
@@ -141,12 +153,14 @@ const Home = ({ initialQuota = 5, initialWatched = 0 }: HomeProps) => {
 
       {/* Ad Creation Dialog */}
       <Dialog open={showAdForm} onOpenChange={setShowAdForm}>
-        <DialogContent className="max-w-4xl">
-          <AdCreationForm isUnlocked={true} />
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <AdCreationForm
+            isUnlocked={isQuotaMet}
+            onSuccess={loadViewedCount}
+            onClose={() => setShowAdForm(false)}
+          />
         </DialogContent>
       </Dialog>
     </div>
   );
-};
-
-export default Home;
+}
